@@ -216,6 +216,8 @@
     function cleanAndStandardizeRank(rawRank) {
       if (!rawRank) return '';
       let clean = removeFancyFont(rawRank);
+      const lowerClean = clean.toLowerCase();
+      if (lowerClean.includes('super admin') || lowerClean.includes('head admin')) return 'Admin';
       const standardRanks = [
         "Supervisor", "Mod", "Admin", "Super Admin", "Head Admin",
         "Controller", "Hand of the king", "Pre Master", "Master", "Advisor",
@@ -223,7 +225,6 @@
         "President", "Commander", "Mythical", "Colonel", "Boss",
         "Big Boss", "CEO", "Co Founder", "Founder", "Consultant"
       ];
-      const lowerClean = clean.toLowerCase();
       for (let rank of standardRanks) {
         if (lowerClean.includes(rank.toLowerCase())) return rank;
       }

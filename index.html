@@ -183,7 +183,8 @@
 
   <script>
     // رول خارج الخدمة لقسم الانترفيو
-    const INTERVIEW_OUT_ROLE = "<@&1135000855872020513>";
+    const OUT_OF_SERVICE_ROLE_ID = "1135000855872020513";
+    const OUT_OF_SERVICE_ROLE_MENTION = `<@&${OUT_OF_SERVICE_ROLE_ID}>`;
 
     function removeFancyFont(text) {
       if (!text) return '';
@@ -287,7 +288,7 @@
           else if (key === 'التقييم' || key === 'التقيم') data.rawEval = val;
         });
 
-        const sourceMention = data.userMention || data.userId;
+        const sourceMention = data.userId || data.userMention;
 
         if (sourceMention) {
           processedCount++;
@@ -296,13 +297,22 @@
           if (rawKey && rawKey.length >= 17) idTracker[rawKey] = (idTracker[rawKey] || 0) + 1;
 
           const cleanRank = cleanAndStandardizeRank(data.rank);
+          const finalEvalText = data.finalEval || '';
+          const rawEvalText = data.rawEval || '';
+          const importantEvalText = `${finalEvalText} ${rawEvalText}`;
+          const roleMentionInFinalEval = finalEvalText.match(/<@&\d{17,20}>/);
+          const hasOutKeyword = /خارج الخدمة|خارج خدمة/.test(importantEvalText);
+          const hasRoleMention = /<@&\d{17,20}>/.test(importantEvalText);
+          const hasConfiguredOutRole = importantEvalText.includes(OUT_OF_SERVICE_ROLE_ID) || importantEvalText.includes(OUT_OF_SERVICE_ROLE_MENTION);
+          const isOutOfService = hasOutKeyword || hasRoleMention || hasConfiguredOutRole;
+
           let finalRating = data.finalEval || data.rawEval || 'سيء';
 
-          if (finalRating.includes('جديد')) {
-            countNew++;
-          } else if (finalRating.includes('خارج خدمة') || finalRating.includes('خارج الخدمة') || finalRating.includes('إجازة')) {
+          if (isOutOfService || finalRating.includes('إجازة')) {
             countOut++;
-            finalRating = INTERVIEW_OUT_ROLE;
+            finalRating = roleMentionInFinalEval ? roleMentionInFinalEval[0] : OUT_OF_SERVICE_ROLE_MENTION;
+          } else if (finalRating.includes('جديد')) {
+            countNew++;
           } else if (finalRating.includes('سيء') || finalRating.includes('سئ')) {
             countBad++;
           } else if (['جيد جدا', 'ممتاز', 'ممتاز جدا'].some(r => finalRating.includes(r))) {
